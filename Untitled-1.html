@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Генератор паролей 💖</title>
+<style>
+  /* 🔹 Базовые стили */
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #ffe0f0, #ffd2ea, #ffc0e0);
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 6px 25px rgba(255, 90, 150, 0.25);
+    max-width: 450px;
+    width: 100%;
+    text-align: center;
+  }
+  h1 {
+    color: #e83e8c;
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+  }
+  label {
+    display: block;
+    text-align: left;
+    margin-top: 12px;
+    color: #333;
+    font-size: 1rem;
+  }
+  input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border-radius: 8px;
+    border: 1px solid #f5b3d4;
+    font-size: 1rem;
+  }
+  .checkboxes {
+    margin-top: 12px;
+    text-align: left;
+  }
+  .checkboxes label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+    color: #444;
+  }
+  input[type="checkbox"] {
+    transform: scale(1.3);
+    accent-color: #ff5ea5;
+  }
+  button {
+    margin-top: 15px;
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  #generate { background: #ff5ea5; color: white; }
+  #generate:hover { background: #ff408f; }
+  #copy { background: #ffe4f0; color: #ff408f; margin-top: 8px; }
+  #copy:hover { background: #ffd2ea; }
+  .output {
+    margin-top: 15px;
+    padding: 10px;
+    background: #fff0f7;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 1rem;
+    min-height: 35px;
+    color: #d63384;
+    word-break: break-all;
+    user-select: all;
+  }
+  .strength-container { margin-top: 15px; text-align: left; }
+  .strength-bar { height: 12px; width: 100%; background: #f1c5dc; border-radius: 6px; overflow: hidden; }
+  .strength-bar-fill { height: 100%; width: 0%; background: #ff5ea5; transition: width 0.4s ease, background 0.4s ease; }
+  .strength-text { margin-top: 8px; font-size: 0.9rem; color: #555; text-align: center; }
+
+  /* 🔹 Адаптация под телефоны */
+  @media (max-width: 480px) {
+    body { padding: 10px; }
+    .container { padding: 20px; border-radius: 12px; }
+    h1 { font-size: 1.5rem; }
+    button { padding: 10px; font-size: 0.95rem; }
+    input[type="number"] { font-size: 0.95rem; padding: 6px; }
+    .output { font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Генератор паролей 💖</h1>
+
+  <label for="length">Длина пароля:</label>
+  <input type="number" id="length" value="12" min="4" max="50">
+
+  <div class="checkboxes">
+    <label><input type="checkbox" id="lower" checked> Маленькие буквы (a–z)</label>
+    <label><input type="checkbox" id="upper" checked> Большие буквы (A–Z)</label>
+    <label><input type="checkbox" id="numbers" checked> Цифры (0–9)</label>
+    <label><input type="checkbox" id="symbols"> Символы (!@#$%^&*)</label>
+  </div>
+
+  <button id="generate">Сгенерировать пароль</button>
+  <button id="copy">Скопировать пароль</button>
+
+  <div class="output" id="password">Ваш пароль появится здесь</div>
+
+  <div class="strength-container">
+    <div class="strength-bar">
+      <div class="strength-bar-fill" id="strength-fill"></div>
+    </div>
+    <div class="strength-text" id="strength-text">Сила пароля: —</div>
+  </div>
+</div>
+
+<script>
+const btnGen = document.getElementById("generate");
+const btnCopy = document.getElementById("copy");
+const output = document.getElementById("password");
+const strengthFill = document.getElementById("strength-fill");
+const strengthText = document.getElementById("strength-text");
+
+function generatePassword(length, lower, upper, numbers, symbols) {
+  let charset = "";
+  if (lower) charset += "abcdefghijklmnopqrstuvwxyz";
+  if (upper) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  if (numbers) charset += "0123456789";
+  if (symbols) charset += "!@#$%^&*()_+[]{}<>?";
+  if (charset === "") return "Выберите хотя бы один тип символов!";
+
+  let password = "";
+  const array = new Uint32Array(length);
+  crypto.getRandomValues(array);
+  for (let i = 0; i < length; i++) {
+    password += charset[array[i] % charset.length];
+  }
+  return password;
+}
+
+function checkStrength(password) {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+
+  if (score <= 2) {
+    strengthFill.style.width = "25%";
+    strengthFill.style.background = "#ff4d6d";
+    strengthText.textContent = "Сила пароля: слабая 😔";
+  } else if (score === 3) {
+    strengthFill.style.width = "50%";
+    strengthFill.style.background = "#ffa94d";
+    strengthText.textContent = "Сила пароля: средняя 🙂";
+  } else if (score === 4) {
+    strengthFill.style.width = "75%";
+    strengthFill.style.background = "#74c69d";
+    strengthText.textContent = "Сила пароля: хорошая 😎";
+  } else {
+    strengthFill.style.width = "100%";
+    strengthFill.style.background = "#4cc9f0";
+    strengthText.textContent = "Сила пароля: отличная 💪";
+  }
+}
+
+btnGen.addEventListener("click", () => {
+  const length = +document.getElementById("length").value;
+  const lower = document.getElementById("lower").checked;
+  const upper = document.getElementById("upper").checked;
+  const numbers = document.getElementById("numbers").checked;
+  const symbols = document.getElementById("symbols").checked;
+
+  const pw = generatePassword(length, lower, upper, numbers, symbols);
+  output.textContent = pw;
+  checkStrength(pw);
+});
+
+btnCopy.addEventListener("click", async () => {
+  const text = output.textContent;
+  if (!text || text === "Ваш пароль появится здесь") {
+    alert("Сначала сгенерируйте пароль 💡");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    btnCopy.textContent = "Скопировано! 💫";
+    setTimeout(() => (btnCopy.textContent = "Скопировать пароль"), 1500);
+  } catch (err) {
+    alert("Не удалось скопировать автоматически.");
+  }
+});
+</script>
+</body>
+</html>
